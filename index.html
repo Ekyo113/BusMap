@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>公車動態監控系統</title>
+  <meta name="description" content="即時監控公車動態位置、品情通報狀態與注意車輛，支援台南、高雄等城市。" />
+
+  <!-- Leaflet.js -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── 頂部標題列 ── -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="logo-icon">🚌</div>
+      <div>
+        <h1 class="topbar-title">公車動態監控</h1>
+        <p class="topbar-sub">Bus Real-Time Monitor</p>
+      </div>
+    </div>
+    <div class="topbar-center">
+      <select id="citySelect" class="city-select">
+        <option value="">載入城市中...</option>
+      </select>
+    </div>
+    <div class="topbar-right">
+      <div class="refresh-info">
+        <span class="dot-pulse"></span>
+        <span id="lastUpdated">---</span>
+      </div>
+      <div class="countdown-ring">
+        <svg viewBox="0 0 36 36" class="ring-svg">
+          <path class="ring-bg" d="M18 2 a 16 16 0 0 1 0 32 a 16 16 0 0 1 0 -32"/>
+          <path id="ringPath" class="ring-progress" d="M18 2 a 16 16 0 0 1 0 32 a 16 16 0 0 1 0 -32"/>
+        </svg>
+        <span id="countdownNum">30</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── 統計列 ── -->
+  <div class="stats-bar">
+    <div class="stat-card" id="statTotal">
+      <span class="stat-num">--</span>
+      <span class="stat-label">總計</span>
+    </div>
+    <div class="stat-card incident" id="statIncident">
+      <span class="stat-num">--</span>
+      <span class="stat-label">🔴 品情通報</span>
+    </div>
+    <div class="stat-card attention" id="statAttention">
+      <span class="stat-num">--</span>
+      <span class="stat-label">🟡 注意車輛</span>
+    </div>
+    <div class="stat-card operating" id="statOperating">
+      <span class="stat-num">--</span>
+      <span class="stat-label">🟢 營運中</span>
+    </div>
+    <div class="stat-card offline" id="statOffline">
+      <span class="stat-num">--</span>
+      <span class="stat-label">⚫ 未營運</span>
+    </div>
+  </div>
+
+  <!-- ── 主體：左表格 + 右地圖 ── -->
+  <main class="main-layout">
+
+    <!-- 左：車輛狀態表格 -->
+    <section class="table-panel">
+      <div class="panel-header">
+        <span class="panel-title">車輛狀態列表</span>
+        <div class="filter-group">
+          <button class="filter-btn active" data-filter="all" id="filterAll">全部</button>
+          <button class="filter-btn" data-filter="incident" id="filterIncident">品情</button>
+          <button class="filter-btn" data-filter="attention" id="filterAttention">注意</button>
+          <button class="filter-btn" data-filter="operating" id="filterOperating">營運</button>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table class="bus-table" id="busTable">
+          <thead>
+            <tr>
+              <th>狀態</th>
+              <th>車牌</th>
+              <th>路線</th>
+              <th>目前站點</th>
+              <th>說明</th>
+            </tr>
+          </thead>
+          <tbody id="busTableBody">
+            <tr><td colspan="5" class="loading-row">⏳ 載入中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 右：地圖 -->
+    <section class="map-panel">
+      <div id="map"></div>
+      <div class="map-legend">
+        <span class="legend-item"><span class="legend-dot incident"></span>品情通報</span>
+        <span class="legend-item"><span class="legend-dot attention"></span>注意車輛</span>
+        <span class="legend-item"><span class="legend-dot operating"></span>營運中</span>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Toast 通知 -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -216,19 +216,17 @@ function updateMap(buses) {
                      : b.status === "incident"  ? "pulse-incident"
                      : "";
 
-    // 自訂圓形圖示
+    // 自訂像素公車 + 車牌圖示
     const icon = L.divIcon({
-      className: "bus-marker-div",
-      html: `<svg width="20" height="20" viewBox="0 0 20 20">
-               ${pulseClass ? `<circle cx="10" cy="10" r="9" fill="${color}" opacity="0.25">
-                 <animate attributeName="r" values="8;14;8" dur="1.6s" repeatCount="indefinite"/>
-                 <animate attributeName="opacity" values="0.4;0;0.4" dur="1.6s" repeatCount="indefinite"/>
-               </circle>` : ""}
-               <circle cx="10" cy="10" r="7" fill="${color}" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
-               ${b.status === "incident" ? `<text x="10" y="14" text-anchor="middle" font-size="8" fill="white">!</text>` : ""}
-             </svg>`,
-      iconSize: [20, 20],
-      iconAnchor: [10, 10],
+      className: `bus-marker-div ${pulseClass}`,
+      html: `<div class="bus-icon-wrapper ${b.status}">
+               <div class="bus-plate">${escHtml(b.plate_number)}</div>
+               <div class="bus-emoji">🚍</div>
+               ${b.status === "incident" ? `<div class="bus-alert">!</div>` : ""}
+             </div>`,
+      iconSize: [60, 50],
+      iconAnchor: [30, 45], // 讓 emoji 底部對準座標
+      popupAnchor: [0, -40]
     });
 
     const popupHtml = buildPopup(b);

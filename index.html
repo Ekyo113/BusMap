@@ -18,6 +18,17 @@
 </head>
 <body>
 
+  <!-- 密碼輸入框 -->
+  <div id="authModal" class="auth-modal hidden">
+    <div class="auth-box">
+      <h2>🚌 系統登入</h2>
+      <p>請輸入密碼以查看公車即時動態</p>
+      <input type="password" id="authPwd" placeholder="輸入密碼..." />
+      <button id="authBtn">登入</button>
+      <p id="authError" class="auth-error hidden">密碼錯誤，請重試！</p>
+    </div>
+  </div>
+
   <!-- ── 頂部標題列 ── -->
   <header class="topbar">
     <div class="topbar-left">

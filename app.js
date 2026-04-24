@@ -46,6 +46,10 @@ const STATUS_COLOR = {
 const citySelect      = document.getElementById("citySelect");
 const btnUpdateRoute  = document.getElementById("btnUpdateRoute");
 const busTableBody    = document.getElementById("busTableBody");
+const authModal       = document.getElementById("authModal");
+const authPwd         = document.getElementById("authPwd");
+const authBtn         = document.getElementById("authBtn");
+const authError       = document.getElementById("authError");
 const lastUpdatedEl   = document.getElementById("lastUpdated");
 const countdownNumEl  = document.getElementById("countdownNum");
 const ringPath        = document.getElementById("ringPath");
@@ -70,26 +74,64 @@ let countdownTimer = null;
 let countdown      = REFRESH_SEC;
 const CIRCUMFERENCE = 100.53; // 2π × 16（SVG 路徑周長）
 
+// ── 密碼管理 ──────────────────────────────
+function getPassword() {
+  return sessionStorage.getItem("map_pwd") || "";
+}
+
+function handleAuthFail() {
+  sessionStorage.removeItem("map_pwd");
+  authModal.classList.remove("hidden");
+  authError.classList.remove("hidden");
+  authPwd.value = "";
+  authPwd.focus();
+  clearInterval(countdownTimer);
+}
+
+async function apiFetch(url) {
+  const pwd = getPassword();
+  const res = await fetch(url, {
+    headers: { "X-Map-Password": pwd }
+  });
+  if (res.status === 401) {
+    handleAuthFail();
+    throw new Error("Unauthorized");
+  }
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res;
+}
+
 // ── 初始化 ────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
   initMap();
-  await loadCities();
-  await refresh();
-  startCountdown();
+
+  if (authBtn) {
+    authBtn.addEventListener("click", () => {
+      if (authPwd.value) {
+        sessionStorage.setItem("map_pwd", authPwd.value);
+        authModal.classList.add("hidden");
+        authError.classList.add("hidden");
+        startApp();
+      }
+    });
+    authPwd.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") authBtn.click();
+    });
+  }
 
   // 城市切換
   citySelect.addEventListener("change", async () => {
     clearMarkers();
     busData = [];
     renderTable([]);
-    await refresh();
+    await refresh(false);
     resetCountdown();
   });
 
   if (btnUpdateRoute) {
     btnUpdateRoute.addEventListener("click", async () => {
       showToast("立即更新中...");
-      await refresh();
+      await refresh(true);
       resetCountdown();
     });
   }
@@ -110,7 +152,24 @@ document.addEventListener("DOMContentLoaded", async () => {
       renderTable(busData);
     });
   }
+
+  if (getPassword()) {
+    authModal.classList.add("hidden");
+    startApp();
+  } else {
+    authModal.classList.remove("hidden");
+  }
 });
+
+async function startApp() {
+  try {
+    await loadCities();
+    await refresh(false);
+    startCountdown();
+  } catch (e) {
+    console.error("Failed to start app", e);
+  }
+}
 
 // ── 地圖初始化 ────────────────────────────
 function initMap() {
@@ -124,8 +183,7 @@ function initMap() {
 // ── 取得城市清單 ──────────────────────────
 async function loadCities() {
   try {
-    const res = await fetch(`${API_BASE}/bus/cities`);
-    if (!res.ok) throw new Error(res.status);
+    const res = await apiFetch(`${API_BASE}/bus/cities`);
     const cities = await res.json();
 
     citySelect.innerHTML = "";
@@ -147,11 +205,11 @@ async function loadCities() {
 }
 
 // ── 主要刷新函式 ──────────────────────────
-async function refresh() {
+async function refresh(forceA2 = false) {
   const city = citySelect.value || "Tainan";
   try {
-    const res = await fetch(`${API_BASE}/bus/status?city=${city}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const url = `${API_BASE}/bus/status?city=${city}${forceA2 ? "&force_a2=true" : ""}`;
+    const res = await apiFetch(url);
     const data = await res.json();
 
     busData = data.buses || [];
@@ -394,7 +452,7 @@ function startCountdown() {
         busData = [];
         renderTable([]);
       }
-      await refresh();
+      await refresh(false);
     }
   }, 1000);
 }

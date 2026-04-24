@@ -536,6 +536,91 @@ tr.row-attention:hover { animation: none; }
 .toast.visible { opacity: 1; transform: translateY(0); }
 
 /* ─────────────────────────────────────────
+   登入視窗
+───────────────────────────────────────── */
+.auth-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 17, 23, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  transition: opacity 0.3s;
+}
+
+.auth-modal.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.auth-box {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  padding: 30px 40px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+  width: 90%;
+  max-width: 360px;
+}
+
+.auth-box h2 {
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.auth-box p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
+.auth-box input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font);
+  font-size: 14px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.auth-box input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.auth-box button {
+  width: 100%;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.auth-box button:hover {
+  background: var(--accent-dim);
+}
+
+.auth-error {
+  color: var(--incident-color) !important;
+  margin-top: 12px !important;
+  margin-bottom: 0 !important;
+  font-weight: 500;
+}
+
+/* ─────────────────────────────────────────
    Leaflet 覆蓋層客製化
 ───────────────────────────────────────── */
 .leaflet-control-zoom a {

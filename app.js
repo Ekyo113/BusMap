@@ -45,7 +45,6 @@ const STATUS_COLOR = {
 // ── DOM 參照 ───────────────────────────────
 const citySelect      = document.getElementById("citySelect");
 const btnUpdateRoute  = document.getElementById("btnUpdateRoute");
-const btnUpdateStop   = document.getElementById("btnUpdateStop");
 const busTableBody    = document.getElementById("busTableBody");
 const lastUpdatedEl   = document.getElementById("lastUpdated");
 const countdownNumEl  = document.getElementById("countdownNum");
@@ -89,15 +88,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (btnUpdateRoute) {
     btnUpdateRoute.addEventListener("click", async () => {
-      showToast("更新路線中...");
-      await refresh();
-      resetCountdown();
-    });
-  }
-
-  if (btnUpdateStop) {
-    btnUpdateStop.addEventListener("click", async () => {
-      showToast("更新目前站點中...");
+      showToast("立即更新中...");
       await refresh();
       resetCountdown();
     });

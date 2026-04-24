@@ -12,7 +12,7 @@
 // ── 設定 ──────────────────────────────────
 const API_BASE       = "https://busappeal.onrender.com";
 // const API_BASE    = "http://localhost:8000";  // ← 本地測試用，取消此行註解
-const REFRESH_SEC    = 30;   // 自動刷新間隔（秒）
+const REFRESH_SEC    = 120;   // 自動刷新間隔（秒）
 const STALL_LABEL_SEC = 120; // 超過幾秒顯示靜止時間（= 2分鐘）
 
 // ── 狀態對應 ───────────────────────────────
@@ -44,6 +44,8 @@ const STATUS_COLOR = {
 
 // ── DOM 參照 ───────────────────────────────
 const citySelect      = document.getElementById("citySelect");
+const btnUpdateRoute  = document.getElementById("btnUpdateRoute");
+const btnUpdateStop   = document.getElementById("btnUpdateStop");
 const busTableBody    = document.getElementById("busTableBody");
 const lastUpdatedEl   = document.getElementById("lastUpdated");
 const countdownNumEl  = document.getElementById("countdownNum");
@@ -82,6 +84,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     await refresh();
     resetCountdown();
   });
+
+  if (btnUpdateRoute) {
+    btnUpdateRoute.addEventListener("click", async () => {
+      showToast("更新路線中...");
+      await refresh();
+      resetCountdown();
+    });
+  }
+
+  if (btnUpdateStop) {
+    btnUpdateStop.addEventListener("click", async () => {
+      showToast("更新目前站點中...");
+      await refresh();
+      resetCountdown();
+    });
+  }
 
   // 表格過濾按鈕
   filterBtns.forEach(btn => {
@@ -320,6 +338,16 @@ function startCountdown() {
     updateRing(countdown);
     if (countdown <= 0) {
       countdown = REFRESH_SEC;
+      const options = Array.from(citySelect.options);
+      if (options.length > 1) {
+        const currentIndex = options.findIndex(opt => opt.value === citySelect.value);
+        const nextIndex = (currentIndex + 1) % options.length;
+        citySelect.value = options[nextIndex].value;
+        
+        clearMarkers();
+        busData = [];
+        renderTable([]);
+      }
       await refresh();
     }
   }, 1000);

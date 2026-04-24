@@ -447,7 +447,7 @@ function updateLastUpdated(isoStr) {
 
 // ── 倒數計時器 ────────────────────────────
 function startCountdown() {
-  countdown = REFRESH_SEC;
+  updateRing(countdown);
   countdownTimer = setInterval(async () => {
     countdown--;
     updateRing(countdown);
@@ -474,6 +474,7 @@ function startCountdown() {
 
 function resetCountdown() {
   clearInterval(countdownTimer);
+  countdown = REFRESH_SEC;
   startCountdown();
 }
 

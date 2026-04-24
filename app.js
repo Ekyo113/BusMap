@@ -52,6 +52,7 @@ const countdownNumEl  = document.getElementById("countdownNum");
 const ringPath        = document.getElementById("ringPath");
 const toastEl         = document.getElementById("toast");
 const filterBtns      = document.querySelectorAll(".filter-btn");
+const vendorSelect    = document.getElementById("vendorSelect");
 
 // Stats
 const statTotal     = document.getElementById("statTotal").querySelector(".stat-num");
@@ -65,6 +66,7 @@ let map;
 let markers        = {};    // plate_number → Leaflet marker
 let busData        = [];    // 最新一次 API 回傳的 buses 陣列
 let currentFilter  = "all"; // 目前過濾條件
+let currentVendor  = "all"; // 目前客運過濾
 let countdownTimer = null;
 let countdown      = REFRESH_SEC;
 const CIRCUMFERENCE = 100.53; // 2π × 16（SVG 路徑周長）
@@ -110,6 +112,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       renderTable(busData);
     });
   });
+
+  if (vendorSelect) {
+    vendorSelect.addEventListener("change", () => {
+      currentVendor = vendorSelect.value;
+      renderTable(busData);
+    });
+  }
 });
 
 // ── 地圖初始化 ────────────────────────────
@@ -155,6 +164,7 @@ async function refresh() {
     const data = await res.json();
 
     busData = data.buses || [];
+    updateVendorSelect(busData);
 
     // 取得選取城市的中心座標並移動地圖
     updateMapCenter(city);
@@ -187,11 +197,36 @@ function updateMapCenter(cityCode) {
   map.flyTo(center, 12, { duration: 1.2 });
 }
 
+// ── 更新客運選單 ──────────────────────────
+function updateVendorSelect(buses) {
+  if (!vendorSelect) return;
+  const vendors = new Set(buses.map(b => b.vendor_name).filter(v => v));
+  const options = ["<option value='all'>所有客運</option>"];
+  
+  const selected = vendorSelect.value;
+  
+  Array.from(vendors).sort().forEach(v => {
+    options.push(`<option value="${escHtml(v)}">${escHtml(v)}</option>`);
+  });
+  
+  vendorSelect.innerHTML = options.join("");
+  
+  if (vendors.has(selected) || selected === "all") {
+    vendorSelect.value = selected;
+  } else {
+    vendorSelect.value = "all";
+    currentVendor = "all";
+  }
+}
+
 // ── 渲染表格 ──────────────────────────────
 function renderTable(buses) {
   let filtered = buses;
+  if (currentVendor !== "all") {
+    filtered = filtered.filter(b => b.vendor_name === currentVendor);
+  }
   if (currentFilter !== "all") {
-    filtered = buses.filter(b => b.status === currentFilter);
+    filtered = filtered.filter(b => b.status === currentFilter);
   }
 
   if (filtered.length === 0) {
@@ -226,7 +261,11 @@ function updateMap(buses) {
   const activePlates = new Set();
 
   buses.forEach(b => {
-    if (!b.lat || !b.lon) return;
+    // 優先使用目前 GPS，若無則使用最後一次紀錄的 GPS
+    const lat = b.lat || b.last_lat;
+    const lon = b.lon || b.last_lon;
+    if (!lat || !lon) return;
+
     activePlates.add(b.plate_number);
 
     const color = STATUS_COLOR[b.status] || "#6e7681";
@@ -250,11 +289,11 @@ function updateMap(buses) {
     const popupHtml = buildPopup(b);
 
     if (markers[b.plate_number]) {
-      markers[b.plate_number].setLatLng([b.lat, b.lon]);
+      markers[b.plate_number].setLatLng([lat, lon]);
       markers[b.plate_number].setIcon(icon);
       markers[b.plate_number].getPopup()?.setContent(popupHtml);
     } else {
-      const m = L.marker([b.lat, b.lon], { icon })
+      const m = L.marker([lat, lon], { icon })
         .addTo(map)
         .bindPopup(popupHtml);
       markers[b.plate_number] = m;
@@ -278,6 +317,21 @@ function buildPopup(b) {
   };
   const cls = statusColor[b.status] || "";
 
+  // 格式化時間：如果是字串可以轉 Date
+  let lastTimeHtml = "";
+  if (b.status === "not_operating" && b.last_gps_time) {
+    try {
+      const d = new Date(b.last_gps_time);
+      const timeStr = `${d.getFullYear()}/${(d.getMonth()+1).toString().padStart(2,"0")}/${d.getDate().toString().padStart(2,"0")} ${d.getHours().toString().padStart(2,"0")}:${d.getMinutes().toString().padStart(2,"0")}`;
+      lastTimeHtml = `<div class="popup-row" style="margin-top:6px;font-size:12px;color:var(--text-muted)">最後紀錄：${timeStr}</div>`;
+    } catch {
+      // ignore
+    }
+  }
+
+  const lat = b.lat || b.last_lat;
+  const lon = b.lon || b.last_lon;
+
   return `
     <div class="popup-plate">${escHtml(b.plate_number)}</div>
     <div class="popup-row">狀態：<span class="${cls}">${STATUS_ICON[b.status]} ${STATUS_LABEL[b.status] || ""}</span></div>
@@ -289,8 +343,9 @@ function buildPopup(b) {
     ${b.has_incident
       ? `<div class="popup-row" style="margin-top:6px">⚠ <span style="color:var(--incident-color)">${escHtml(b.incident_description || "")}</span></div>`
       : ""}
+    ${lastTimeHtml}
     <div class="popup-row" style="margin-top:6px;font-size:11px;color:var(--text-muted)">
-      GPS: ${b.lat?.toFixed(5)}, ${b.lon?.toFixed(5)}
+      GPS: ${lat?.toFixed(5) || "未知"}, ${lon?.toFixed(5) || "未知"}
     </div>`;
 }
 

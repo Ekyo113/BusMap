@@ -147,6 +147,12 @@ html, body {
   background: var(--bg-hover);
 }
 
+.action-btn.paused {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .topbar-right {
   display: flex;
   align-items: center;

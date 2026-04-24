@@ -54,6 +54,7 @@ const lastUpdatedEl   = document.getElementById("lastUpdated");
 const countdownNumEl  = document.getElementById("countdownNum");
 const ringPath        = document.getElementById("ringPath");
 const toastEl         = document.getElementById("toast");
+const btnPauseRotation = document.getElementById("btnPauseRotation");
 const filterBtns      = document.querySelectorAll(".filter-btn");
 const vendorSelect    = document.getElementById("vendorSelect");
 
@@ -72,6 +73,7 @@ let currentFilter  = "all"; // 目前過濾條件
 let currentVendor  = "all"; // 目前客運過濾
 let countdownTimer = null;
 let countdown      = REFRESH_SEC;
+let isPaused       = false;
 const CIRCUMFERENCE = 100.53; // 2π × 16（SVG 路徑周長）
 
 // ── 密碼管理 ──────────────────────────────
@@ -133,6 +135,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       showToast("立即更新中...");
       await refresh(true);
       resetCountdown();
+    });
+  }
+
+  if (btnPauseRotation) {
+    btnPauseRotation.addEventListener("click", () => {
+      isPaused = !isPaused;
+      btnPauseRotation.classList.toggle("paused", isPaused);
+      btnPauseRotation.textContent = isPaused ? "繼續輪動" : "暫停輪動";
+      showToast(isPaused ? "⏸ 已暫停自動輪動" : "▶ 已恢復自動輪動");
     });
   }
 
@@ -442,16 +453,20 @@ function startCountdown() {
     updateRing(countdown);
     if (countdown <= 0) {
       countdown = REFRESH_SEC;
-      const options = Array.from(citySelect.options);
-      if (options.length > 1) {
-        const currentIndex = options.findIndex(opt => opt.value === citySelect.value);
-        const nextIndex = (currentIndex + 1) % options.length;
-        citySelect.value = options[nextIndex].value;
-        
-        clearMarkers();
-        busData = [];
-        renderTable([]);
+      
+      if (!isPaused) {
+        const options = Array.from(citySelect.options);
+        if (options.length > 1) {
+          const currentIndex = options.findIndex(opt => opt.value === citySelect.value);
+          const nextIndex = (currentIndex + 1) % options.length;
+          citySelect.value = options[nextIndex].value;
+          
+          clearMarkers();
+          busData = [];
+          renderTable([]);
+        }
       }
+      
       await refresh(false);
     }
   }, 1000);

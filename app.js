@@ -12,7 +12,7 @@
 // ── 設定 ──────────────────────────────────
 const API_BASE       = "https://busappeal.onrender.com";
 // const API_BASE    = "http://localhost:8000";  // ← 本地測試用，取消此行註解
-const REFRESH_SEC    = 20;   // 自動刷新間隔（秒）
+const REFRESH_SEC    = 300;  // 自動刷新間隔（秒）
 const STALL_LABEL_SEC = 120; // 超過幾秒顯示靜止時間（= 2分鐘）
 
 // ── 狀態對應 ───────────────────────────────

@@ -12,7 +12,7 @@
 // ── 設定 ──────────────────────────────────
 const API_BASE       = "https://busappeal.onrender.com";
 // const API_BASE    = "http://localhost:8000";  // ← 本地測試用，取消此行註解
-const REFRESH_SEC    = 300;  // 自動刷新間隔（秒）
+const REFRESH_SEC    = 600;  // 自動刷新間隔（秒）
 const STALL_LABEL_SEC = 120; // 超過幾秒顯示靜止時間（= 2分鐘）
 
 // ── 狀態對應 ───────────────────────────────
@@ -71,8 +71,8 @@ let markers        = {};    // plate_number → Leaflet marker
 let busData        = [];    // 最新一次 API 回傳的 buses 陣列
 let currentFilter  = "all"; // 目前過濾條件
 let currentVendor  = "all"; // 目前客運過濾
-let countdownTimer = null;
 let countdown      = REFRESH_SEC;
+let nextRefreshTime = 0;
 let isPaused       = false;
 const CIRCUMFERENCE = 100.53; // 2π × 16（SVG 路徑周長）
 
@@ -447,12 +447,22 @@ function updateLastUpdated(isoStr) {
 
 // ── 倒數計時器 ────────────────────────────
 function startCountdown() {
-  updateRing(countdown);
+  if (!nextRefreshTime) {
+    nextRefreshTime = Date.now() + REFRESH_SEC * 1000;
+  }
+  
+  if (countdownTimer) clearInterval(countdownTimer);
+  
   countdownTimer = setInterval(async () => {
-    countdown--;
+    const now = Date.now();
+    const remaining = Math.max(0, Math.ceil((nextRefreshTime - now) / 1000));
+    
+    countdown = remaining;
     updateRing(countdown);
+    
     if (countdown <= 0) {
-      countdown = REFRESH_SEC;
+      // 重設下一次刷新時間
+      nextRefreshTime = Date.now() + REFRESH_SEC * 1000;
       
       if (!isPaused) {
         const options = Array.from(citySelect.options);
@@ -473,8 +483,7 @@ function startCountdown() {
 }
 
 function resetCountdown() {
-  clearInterval(countdownTimer);
-  countdown = REFRESH_SEC;
+  nextRefreshTime = Date.now() + REFRESH_SEC * 1000;
   startCountdown();
 }
 

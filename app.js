@@ -71,6 +71,7 @@ let markers        = {};    // plate_number → Leaflet marker
 let busData        = [];    // 最新一次 API 回傳的 buses 陣列
 let currentFilter  = "all"; // 目前過濾條件
 let currentVendor  = "all"; // 目前客運過濾
+let countdownTimer = null;
 let countdown      = REFRESH_SEC;
 let nextRefreshTime = 0;
 let isPaused       = false;

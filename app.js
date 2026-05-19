@@ -128,14 +128,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     busData = [];
     renderTable([]);
     await refresh(false);
-    resetCountdown();
   });
 
   if (btnUpdateRoute) {
     btnUpdateRoute.addEventListener("click", async () => {
       showToast("立即更新中...");
       await refresh(true);
-      resetCountdown();
     });
   }
 
@@ -177,7 +175,6 @@ async function startApp() {
   try {
     await loadCities();
     await refresh(false);
-    startCountdown();
   } catch (e) {
     console.error("Failed to start app", e);
   }
@@ -220,7 +217,8 @@ async function loadCities() {
 async function refresh(forceA2 = false) {
   const city = citySelect.value || "Tainan";
   try {
-    const url = `${API_BASE}/bus/status?city=${city}${forceA2 ? "&force_a2=true" : ""}`;
+    const bypassCache = forceA2 ? "&bypass_cache=true" : "";
+    const url = `${API_BASE}/bus/status?city=${city}${forceA2 ? "&force_a2=true" : ""}${bypassCache}`;
     const res = await apiFetch(url);
     const data = await res.json();
 
@@ -234,6 +232,10 @@ async function refresh(forceA2 = false) {
     updateMap(busData);
     updateStats(busData);
     updateLastUpdated(data.updated_at);
+
+    // 根據後端回傳的快取剩餘秒數，重新設定前端倒數時間，以對齊更新頻率
+    const cacheSec = data.cache_remaining_seconds !== undefined ? data.cache_remaining_seconds : REFRESH_SEC;
+    resetCountdown(cacheSec);
 
   } catch (e) {
     showToast("⚠️ 資料取得失敗，請確認後端是否正常運作");
@@ -483,8 +485,10 @@ function startCountdown() {
   }, 1000);
 }
 
-function resetCountdown() {
-  nextRefreshTime = Date.now() + REFRESH_SEC * 1000;
+function resetCountdown(sec = REFRESH_SEC) {
+  nextRefreshTime = Date.now() + sec * 1000;
+  countdown = sec;
+  updateRing(countdown);
   startCountdown();
 }
 

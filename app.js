@@ -76,6 +76,8 @@ let countdown      = REFRESH_SEC;
 let nextRefreshTime = 0;
 let isPaused       = false;
 const CIRCUMFERENCE = 100.53; // 2π × 16（SVG 路徑周長）
+let allPendingReports = [];  // 所有城市的待處理案件清單
+let pendingFocusPlate = null; // 切換城市時等待聚焦的車牌
 
 // ── 密碼管理 ──────────────────────────────
 function getPassword() {
@@ -127,7 +129,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     clearMarkers();
     busData = [];
     renderTable([]);
-    renderPendingQuality([]);
     await refresh(false);
   });
 
@@ -161,7 +162,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     vendorSelect.addEventListener("change", () => {
       currentVendor = vendorSelect.value;
       renderTable(busData);
-      renderPendingQuality(busData);
+      renderPendingQuality();
     });
   }
 
@@ -231,7 +232,7 @@ async function refresh(forceA2 = false) {
     updateMapCenter(city);
 
     renderTable(busData);
-    renderPendingQuality(busData);
+    await loadPendingReports();
     updateMap(busData);
     updateStats(busData);
     updateLastUpdated(data.updated_at);
@@ -239,6 +240,12 @@ async function refresh(forceA2 = false) {
     // 根據後端回傳的快取剩餘秒數，重新設定前端倒數時間，以對齊更新頻率
     const cacheSec = data.cache_remaining_seconds !== undefined ? data.cache_remaining_seconds : REFRESH_SEC;
     resetCountdown(cacheSec);
+
+    // 跨城市點擊後，資料加載完成自動聚焦
+    if (pendingFocusPlate) {
+      focusBus(pendingFocusPlate);
+      pendingFocusPlate = null;
+    }
 
   } catch (e) {
     showToast("⚠️ 資料取得失敗，請確認後端是否正常運作");
@@ -323,8 +330,8 @@ function renderTable(buses) {
 }
 
 // ── 渲染品情待處理清單 ────────────────────────
-function renderPendingQuality(buses) {
-  let filtered = buses.filter(b => b.has_incident === true);
+function renderPendingQuality() {
+  let filtered = allPendingReports;
   if (currentVendor !== "all") {
     filtered = filtered.filter(b => b.vendor_name === currentVendor);
   }
@@ -339,13 +346,45 @@ function renderPendingQuality(buses) {
 
   bodyEl.innerHTML = filtered.map(b => {
     return `
-      <tr data-plate="${escHtml(b.plate_number)}" onclick="focusBus('${escHtml(b.plate_number)}')">
+      <tr data-plate="${escHtml(b.plate_number)}" onclick="handlePendingRowClick('${escHtml(b.plate_number)}', '${escHtml(b.city_code)}')">
         <td class="plate-text">${escHtml(b.plate_number)}</td>
         <td style="color:var(--text-secondary);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(b.incident_description || '')}">
           ${escHtml(b.incident_description || "---")}
         </td>
       </tr>`;
   }).join("");
+}
+
+// ── 點擊待處理清單行 ──────────────────────────
+async function handlePendingRowClick(plate, cityCode) {
+  if (!cityCode) {
+    focusBus(plate);
+    return;
+  }
+
+  if (citySelect.value !== cityCode) {
+    citySelect.value = cityCode;
+    clearMarkers();
+    busData = [];
+    renderTable([]);
+    pendingFocusPlate = plate;
+    await refresh(false);
+  } else {
+    focusBus(plate);
+  }
+}
+
+// ── 從後端加載所有待處理案件 ───────────────────
+async function loadPendingReports() {
+  try {
+    const res = await apiFetch(`${API_BASE}/bus/pending`);
+    allPendingReports = await res.json();
+    renderPendingQuality();
+  } catch (e) {
+    console.error("loadPendingReports error:", e);
+    allPendingReports = [];
+    renderPendingQuality();
+  }
 }
 
 // ── 更新地圖標記 ──────────────────────────

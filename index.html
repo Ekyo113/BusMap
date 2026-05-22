@@ -89,37 +89,60 @@
   <!-- ── 主體：左表格 + 右地圖 ── -->
   <main class="main-layout">
 
-    <!-- 左：車輛狀態表格 -->
-    <section class="table-panel">
-      <div class="panel-header">
-        <span class="panel-title">車輛狀態列表</span>
-        <div class="filter-group">
-          <select id="vendorSelect" class="vendor-select">
-            <option value="all">所有客運</option>
-          </select>
-          <button class="filter-btn active" data-filter="all" id="filterAll">全部</button>
-          <button class="filter-btn" data-filter="incident" id="filterIncident">品情</button>
-          <button class="filter-btn" data-filter="attention" id="filterAttention">注意</button>
-          <button class="filter-btn" data-filter="operating" id="filterOperating">營運</button>
+    <!-- 左側面板容器 -->
+    <div class="left-panels-container">
+      <!-- 左：車輛狀態表格 -->
+      <section class="table-panel">
+        <div class="panel-header">
+          <span class="panel-title">車輛狀態列表</span>
+          <div class="filter-group">
+            <select id="vendorSelect" class="vendor-select">
+              <option value="all">所有客運</option>
+            </select>
+            <button class="filter-btn active" data-filter="all" id="filterAll">全部</button>
+            <button class="filter-btn" data-filter="incident" id="filterIncident">品情</button>
+            <button class="filter-btn" data-filter="attention" id="filterAttention">注意</button>
+            <button class="filter-btn" data-filter="operating" id="filterOperating">營運</button>
+          </div>
         </div>
-      </div>
-      <div class="table-scroll">
-        <table class="bus-table" id="busTable">
-          <thead>
-            <tr>
-              <th>狀態</th>
-              <th>車牌</th>
-              <th>路線</th>
-              <th>目前站點</th>
-              <th>說明</th>
-            </tr>
-          </thead>
-          <tbody id="busTableBody">
-            <tr><td colspan="5" class="loading-row">⏳ 載入中...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+        <div class="table-scroll">
+          <table class="bus-table" id="busTable">
+            <thead>
+              <tr>
+                <th>狀態</th>
+                <th>車牌</th>
+                <th>路線</th>
+                <th>目前站點</th>
+                <th>說明</th>
+              </tr>
+            </thead>
+            <tbody id="busTableBody">
+              <tr><td colspan="5" class="loading-row">⏳ 載入中...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 右：品情待處理清單 -->
+      <section class="table-panel pending-quality-panel">
+        <div class="panel-header">
+          <span class="panel-title">📋 品情待處理清單</span>
+        </div>
+        <div class="table-scroll">
+          <table class="bus-table" id="pendingQualityTable">
+            <thead>
+              <tr>
+                <th>車號</th>
+                <th>問題描述</th>
+              </tr>
+            </thead>
+            <tbody id="pendingQualityBody">
+              <tr><td colspan="2" class="loading-row">⏳ 載入中...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
 
     <!-- 右：地圖 -->
     <section class="map-panel">

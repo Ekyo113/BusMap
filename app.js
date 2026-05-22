@@ -127,6 +127,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     clearMarkers();
     busData = [];
     renderTable([]);
+    renderPendingQuality([]);
     await refresh(false);
   });
 
@@ -160,6 +161,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     vendorSelect.addEventListener("change", () => {
       currentVendor = vendorSelect.value;
       renderTable(busData);
+      renderPendingQuality(busData);
     });
   }
 
@@ -229,6 +231,7 @@ async function refresh(forceA2 = false) {
     updateMapCenter(city);
 
     renderTable(busData);
+    renderPendingQuality(busData);
     updateMap(busData);
     updateStats(busData);
     updateLastUpdated(data.updated_at);
@@ -315,6 +318,32 @@ function renderTable(buses) {
         <td>${escHtml(b.route_name || "---")}</td>
         <td style="color:var(--text-secondary);font-size:12px">${escHtml(b.current_stop || "---")}</td>
         <td>${descCell}</td>
+      </tr>`;
+  }).join("");
+}
+
+// ── 渲染品情待處理清單 ────────────────────────
+function renderPendingQuality(buses) {
+  let filtered = buses.filter(b => b.has_incident === true);
+  if (currentVendor !== "all") {
+    filtered = filtered.filter(b => b.vendor_name === currentVendor);
+  }
+
+  const bodyEl = document.getElementById("pendingQualityBody");
+  if (!bodyEl) return;
+
+  if (filtered.length === 0) {
+    bodyEl.innerHTML = `<tr><td colspan="2" class="loading-row">無待處理品情</td></tr>`;
+    return;
+  }
+
+  bodyEl.innerHTML = filtered.map(b => {
+    return `
+      <tr data-plate="${escHtml(b.plate_number)}" onclick="focusBus('${escHtml(b.plate_number)}')">
+        <td class="plate-text">${escHtml(b.plate_number)}</td>
+        <td style="color:var(--text-secondary);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(b.incident_description || '')}">
+          ${escHtml(b.incident_description || "---")}
+        </td>
       </tr>`;
   }).join("");
 }

@@ -272,8 +272,49 @@ html, body {
 ───────────────────────────────────────── */
 .main-layout {
   display: grid;
-  grid-template-columns: 420px 1fr;
+  grid-template-columns: 800px 1fr;
   height: calc(100vh - 60px - 65px);  /* 全高 - topbar - statsbar */
+}
+
+/* ─────────────────────────────────────────
+   左側雙面板容器與面板比率
+───────────────────────────────────────── */
+.left-panels-container {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+}
+
+.left-panels-container > .table-panel {
+  border-right: none;
+}
+
+.left-panels-container > .table-panel:not(:last-child) {
+  border-right: 1px solid var(--border);
+}
+
+.left-panels-container > .table-panel:first-child {
+  flex: 3;
+}
+
+.left-panels-container > .table-panel.pending-quality-panel {
+  flex: 1;
+}
+
+.pending-quality-panel .bus-table th:nth-child(1) {
+  width: 85px !important;
+  text-align: center !important;
+}
+
+.pending-quality-panel .bus-table th:nth-child(2) {
+  width: auto !important;
+  text-align: left !important;
+}
+
+.pending-quality-panel .bus-table td:nth-child(1) {
+  text-align: center;
 }
 
 /* ─────────────────────────────────────────
@@ -282,7 +323,6 @@ html, body {
 .table-panel {
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--border);
   background: var(--bg-surface);
   overflow: hidden;
 }
